@@ -9,6 +9,7 @@ if (process.env.NODE_ENV !== "production") {
 const express = require("express");
 const bodyParser = require("body-parser");
 const path = require("path");
+const cors = require("cors");
 
 //Usamos express un manejo mas simplificado de nodejs
 const app = express();
@@ -22,16 +23,11 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
 // Configurar cabeceras y cors
-app.use((req, res, next) => {
-	res.header("Access-Control-Allow-Origin", "*");
-	res.header(
-		"Access-Control-Allow-Headers",
-		"Authorization, X-API-KEY, Origin, X-Requested-With, Content-Type, Accept, Access-Control-Allow-Request-Method"
-	);
-	res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT, DELETE");
-	res.header("Allow", "GET, POST, OPTIONS, PUT, DELETE");
-	next();
-});
+const whiteList = [
+	"https://taxpeoples.azureedge.net",
+	"https://taxpeoples.z21.web.core.windows.net",
+];
+app.use(cors({ origin: whiteList }));
 
 // cargar archivos rutas
 const home_routes = require("./routes/home");
