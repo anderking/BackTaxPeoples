@@ -26,6 +26,7 @@ app.use(bodyParser.json());
 const whiteList = [
 	"https://taxpeoples.azureedge.net",
 	"https://taxpeoples.z21.web.core.windows.net",
+	"http://localhost:4200",
 ];
 app.use(cors({ origin: whiteList }));
 

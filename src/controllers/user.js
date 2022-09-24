@@ -1,63 +1,72 @@
-'use strict'
+"use strict";
 
-var User = require('../models/user');
-var Publication = require('../models/publication');
-var Persona = require('../models/persona');
-var Empresa = require('../models/empresa');
-var Like = require('../models/like');
-var Coment = require('../models/coment');
-var Calificacion = require('../models/calificacion');
+var User = require("../models/user");
+var Publication = require("../models/publication");
+var Persona = require("../models/persona");
+var Empresa = require("../models/empresa");
+var Like = require("../models/like");
+var Coment = require("../models/coment");
+var Calificacion = require("../models/calificacion");
 
-var fs = require('fs');
-var path = require('path');
-const { v4: uuidv4 } = require('uuid');
+var fs = require("fs");
+var path = require("path");
+const { v4: uuidv4 } = require("uuid");
 
 var controller = {
-
-	saveUser: function(req, res)
-	{
-		User.find
-		(
+	saveUser: function (req, res) {
+		User.find(
 			{
-				email: req.body.email
+				email: req.body.email,
 			},
-			(err, user) =>
-			{
-				if (err)
-				{
+			(err, user) => {
+				if (err) {
 					return res.status(500).send({ message: err });
 				}
-				if(req.body.email==undefined){
-					return res.status(404).send({ message: 'No se encuentra el campo email en el formulario' });	
+				if (req.body.email == undefined) {
+					return res
+						.status(404)
+						.send({
+							message: "No se encuentra el campo email en el formulario",
+						});
 				}
-				if(req.body.password==undefined){
-					return res.status(404).send({ message: 'No se encuentra el campo password en el formulario' });	
+				if (req.body.password == undefined) {
+					return res
+						.status(404)
+						.send({
+							message: "No se encuentra el campo password en el formulario",
+						});
 				}
-				if(req.body.tipo==undefined){
-					return res.status(404).send({ message: 'No se encuentra el campo tipo en el formulario' });	
+				if (req.body.tipo == undefined) {
+					return res
+						.status(404)
+						.send({
+							message: "No se encuentra el campo tipo en el formulario",
+						});
 				}
-				if (user.length>0)
-				{
-					return res.status(404).send({ message: 'El email del usuario ya esta registrado' });
-				}else
-				{
-					const user = new User(
-					{
+				if (user.length > 0) {
+					return res
+						.status(404)
+						.send({ message: "El email del usuario ya esta registrado" });
+				} else {
+					const user = new User({
 						email: req.body.email,
 						password: req.body.password,
 						tipo: req.body.tipo,
 						description: req.body.description,
 					});
 
-					user.save((err, userStored) =>
-					{
-						if(err) return res.status(500).send({message: 'Error en el Servidor.'});
+					user.save((err, userStored) => {
+						if (err)
+							return res.status(500).send({ message: "Error en el Servidor." });
 
-						if(!userStored) return res.status(404).send({message: 'No se puede guardar el usuario'});
-						
+						if (!userStored)
+							return res
+								.status(404)
+								.send({ message: "No se puede guardar el usuario" });
+
 						return res.status(200).send({
 							user: userStored,
-							message: "Usuario Creado Correctamente"
+							message: "Usuario Creado Correctamente",
 						});
 					});
 				}
@@ -65,245 +74,292 @@ var controller = {
 		);
 	},
 
-	getUser: function(req, res){
+	getUser: function (req, res) {
 		var userId = req.params.id;
 
-		if(userId == null) return res.status(404).send({message: 'El Usuario no existe.'});
+		if (userId == null)
+			return res.status(404).send({ message: "El Usuario no existe." });
 
 		User.findById(userId, (err, user) => {
+			if (err)
+				return res.status(500).send({ message: "Error en el Servidor." });
 
-			if(err) return res.status(500).send({message: 'Error en el Servidor.'});
-
-			if(!user) return res.status(404).send({message: 'El id del Usuario no existe.'});
+			if (!user)
+				return res
+					.status(404)
+					.send({ message: "El id del Usuario no existe." });
 
 			return res.status(200).send({
-				user
+				user,
 			});
-
 		});
 	},
 
-	getUsers: function(req, res){
+	getUsers: function (req, res) {
+		User.find({})
+			.sort("-_id")
+			.exec((err, users) => {
+				if (err)
+					return res.status(500).send({ message: "Error en el Servidor." });
 
-		User.find({}).sort('-_id').exec((err, users) => {
+				if (!users)
+					return res
+						.status(404)
+						.send({ message: "No hay Usuarios que mostrar." });
 
-			if(err) return res.status(500).send({message: 'Error en el Servidor.'});
-
-			if(!users) return res.status(404).send({message: 'No hay Usuarios que mostrar.'});
-
-			return res.status(200).send({users});
-		});
-
+				return res.status(200).send({ users });
+			});
 	},
 
-	getUsersExcept: function(req, res){
+	getUsersExcept: function (req, res) {
 		var userId = req.params.id;
 
-		User.find
-		(
-			{ "_id": { $ne: userId } }
-		).sort('-_id').exec((err, users) => {
+		User.find({ _id: { $ne: userId } })
+			.sort("-_id")
+			.exec((err, users) => {
+				if (err)
+					return res.status(500).send({ message: "Error en el Servidor." });
 
-			if(err) return res.status(500).send({message: 'Error en el Servidor.'});
+				if (!users)
+					return res
+						.status(404)
+						.send({ message: "No hay Usuarios que mostrar." });
 
-			if(!users) return res.status(404).send({message: 'No hay Usuarios que mostrar.'});
-
-			return res.status(200).send({users});
-		});
-
+				return res.status(200).send({ users });
+			});
 	},
 
-	updateUser: function(req, res){
+	updateUser: function (req, res) {
 		var userId = req.params.id;
 		var update = req.body;
 
-		User.findByIdAndUpdate(userId, update, {new:true}, (err, userUpdated) => {
-			if(err) return res.status(500).send({message: 'Error en el Servidor'});
-			
-			if(!userUpdated) return res.status(404).send({message: 'Id del usuario no existe'});
+		User.findByIdAndUpdate(
+			userId,
+			update,
+			{ new: true },
+			(err, userUpdated) => {
+				if (err)
+					return res.status(500).send({ message: "Error en el Servidor" });
 
-			return res.status(200).send({
-				user: userUpdated,
-				message: "Datos Actualizados Correctamente"
-			});
-		});
+				if (!userUpdated)
+					return res.status(404).send({ message: "Id del usuario no existe" });
 
+				return res.status(200).send({
+					user: userUpdated,
+					message: "Datos Actualizados Correctamente",
+				});
+			}
+		);
 	},
 
-	deleteUser: function(req, res){
+	deleteUser: function (req, res) {
 		var userId = req.params.id;
 
-		User.findById(userId, (err, user) =>
-		{
-			if(err) return res.status(500).send({message: 'Error en el Servidor'});
+		User.findById(userId, (err, user) => {
+			if (err) return res.status(500).send({ message: "Error en el Servidor" });
 
-			if(!user) return res.status(404).send({message: "Id del usuario no existe."});
-			
-			Publication.find({userID:userId}, (err, publications) =>{
-				if(publications.length>0)
-				{
-					for(var j=0; j<publications.length;j++)
-					{
-						Like.remove({publicationID : publications[j]._id},(err, likeRemoved) =>{
-						});
-						Coment.remove({publicationID : publications[j]._id},(err, comentRemoved) =>{
-						});
+			if (!user)
+				return res.status(404).send({ message: "Id del usuario no existe." });
+
+			Publication.find({ userID: userId }, (err, publications) => {
+				if (publications.length > 0) {
+					for (var j = 0; j < publications.length; j++) {
+						Like.remove(
+							{ publicationID: publications[j]._id },
+							(err, likeRemoved) => {}
+						);
+						Coment.remove(
+							{ publicationID: publications[j]._id },
+							(err, comentRemoved) => {}
+						);
 					}
-					if(user.tipo!="admin")
-					{
-						Publication.remove({userID:userId},(err,publicationsRemoved)=>
-						{
-							if(err) return res.status(500).send({message: 'No se ha podido borrar las publicaciones del usuario'});
-						});
+					if (user.tipo != "admin") {
+						Publication.remove(
+							{ userID: userId },
+							(err, publicationsRemoved) => {
+								if (err)
+									return res
+										.status(500)
+										.send({
+											message:
+												"No se ha podido borrar las publicaciones del usuario",
+										});
+							}
+						);
 					}
 				}
 			});
-			
-			Coment.remove({userID : userId},(err, comentRemoved) =>{
-			});
-			Like.remove({userID : userId},(err, comentRemoved) =>{
-			});
-			Calificacion.remove({userEmisorID : userId},(err, calificationRemoved) =>{
+
+			Coment.remove({ userID: userId }, (err, comentRemoved) => {});
+			Like.remove({ userID: userId }, (err, comentRemoved) => {});
+			Calificacion.remove(
+				{ userEmisorID: userId },
+				(err, calificationRemoved) => {}
+			);
+
+			Persona.remove({ userID: userId }, (err, personaRemoved) => {
+				if (err)
+					return res
+						.status(500)
+						.send({
+							message: "No se ha podido borrar la persona asociada al usuario",
+						});
 			});
 
-			Persona.remove({userID:userId}, (err, personaRemoved) =>
-			{
-				if(err) return res.status(500).send({message: 'No se ha podido borrar la persona asociada al usuario'});
+			Empresa.remove({ userID: userId }, (err, empresaRemoved) => {
+				if (err)
+					return res
+						.status(500)
+						.send({
+							message: "No se ha podido borrar la empresa asociada al usuario",
+						});
 			});
 
-			Empresa.remove({userID:userId}, (err, empresaRemoved) =>
-			{
-				if(err) return res.status(500).send({message: 'No se ha podido borrar la empresa asociada al usuario'});
-			});
-			
-			user.remove((err,userRemoved)=>
-			{
+			user.remove((err, userRemoved) => {
 				return res.status(200).send({
 					user: userRemoved,
-					message: "Usuario Eliminado Correctamente"
+					message: "Usuario Eliminado Correctamente",
 				});
 			});
 		});
 	},
 
-	deleteUsers: function(req, res)
-	{	
+	deleteUsers: function (req, res) {
 		var userId = req.params.id;
 
-		User.find({ "_id": { $ne: userId } }, (err, users) =>
-		{
-			if(users.length>0)
-			{
-				for(var i=0; i<users.length;i++)
-				{
-					Persona.remove({userID:users[i]._id},(err,personaRemoved)=>{
-					});
-					
-					Empresa.remove({userID:users[i]._id},(err,empresaRemoved)=>{
-					});
+		if (userId == null)
+			return res.status(404).send({ message: "El Usuario no existe." });
 
-					Publication.find({userID:users[i]._id}, (err, publications) =>{
-						if(publications.length>0)
-						{
-							for(var j=0; j<publications.length;j++)
-							{
-								Like.remove({publicationID : publications[j]._id},(err, likeRemoved) =>{
-								});
-								Coment.remove({publicationID : publications[j]._id},(err, comentRemoved) =>{
-								});
+		User.find({ _id: { $ne: userId } }, (err, users) => {
+			if (err)
+				return res.status(500).send({ message: "Error en el Servidor." });
+
+			if (!users)
+				return res
+					.status(404)
+					.send({ message: "El id del Usuario no existe." });
+
+			if (users.length > 0) {
+				for (var i = 0; i < users.length; i++) {
+					Persona.remove({ userID: users[i]._id }, (err, personaRemoved) => {});
+
+					Empresa.remove({ userID: users[i]._id }, (err, empresaRemoved) => {});
+
+					Publication.find({ userID: users[i]._id }, (err, publications) => {
+						if (publications.length > 0) {
+							for (var j = 0; j < publications.length; j++) {
+								Like.remove(
+									{ publicationID: publications[j]._id },
+									(err, likeRemoved) => {}
+								);
+								Coment.remove(
+									{ publicationID: publications[j]._id },
+									(err, comentRemoved) => {}
+								);
 							}
-							
-							if(users[i-1].tipo!="admin")
-							{
-								Publication.remove({userID:users[i-1]._id},(err,publicationsRemoved)=>{
-								});
+
+							if (users[i - 1].tipo != "admin") {
+								Publication.remove(
+									{ userID: users[i - 1]._id },
+									(err, publicationsRemoved) => {}
+								);
 							}
 						}
 					});
 
-					Coment.remove({userID : users[i]._id},(err, comentRemoved) =>{
-					});
-					Like.remove({userID : users[i]._id},(err, comentRemoved) =>{
-					});
-					Calificacion.remove({userEmisorID : users[i]._id},(err, comentRemoved) =>{
-					});
+					Coment.remove({ userID: users[i]._id }, (err, comentRemoved) => {});
+					Like.remove({ userID: users[i]._id }, (err, comentRemoved) => {});
+					Calificacion.remove(
+						{ userEmisorID: users[i]._id },
+						(err, comentRemoved) => {}
+					);
 				}
-				User.remove({ "_id": { $ne: userId } }, (err, usersRemoved) =>
-				{	
-					if(users) return res.status(200).send({
-						users: users,
-						message: 'Usuarios Eliminados Correctamente'
-					});
+				User.remove({ _id: { $ne: userId } }, (err, usersRemoved) => {
+					if (users)
+						return res.status(200).send({
+							users: users,
+							message: "Usuarios Eliminados Correctamente",
+						});
 				});
 			}
 		});
-
 	},
 
-	uploadImage: function(req, res){
-		console.log(req.files)
+	uploadImage: function (req, res) {
+		console.log(req.files);
 		if (!req.files || Object.keys(req.files).length === 0) {
-			return res.status(400).send('No hay imagen para procesar.');
+			return res.status(400).send("No hay imagen para procesar.");
 		}
 
 		var userId = req.params.id;
 		const file = req.files.image;
-		if(req.files)
-		{
+		if (req.files) {
 			var filePath = file.name;
-			var fileSplit = filePath.split('.');
+			var fileSplit = filePath.split(".");
 			var fileExt = fileSplit[fileSplit.length - 1];
-			const fileName = `${ uuidv4() }.${ fileExt }`;
-			const path = `./img/${ fileName }`;
+			const fileName = `${uuidv4()}.${fileExt}`;
+			const path = `./img/${fileName}`;
 
-			if(fileExt == 'png' || fileExt == 'jpg' || fileExt == 'jpeg' || fileExt == 'gif')
-			{
-				file.mv( path , (err) => {
-					if (err){
-						console.log(err)
+			if (
+				fileExt == "png" ||
+				fileExt == "jpg" ||
+				fileExt == "jpeg" ||
+				fileExt == "gif"
+			) {
+				file.mv(path, (err) => {
+					if (err) {
+						console.log(err);
 						return res.status(500).json({
 							ok: false,
-							msg: 'Error al mover la imagen'
+							msg: "Error al mover la imagen",
 						});
 					}
 
-					User.findByIdAndUpdate(userId, {image: fileName}, {new: true}, (err, userUpdated) =>
-					{
-						if(err) return res.status(500).send({message: 'La imagen no se ha subido'});
+					User.findByIdAndUpdate(
+						userId,
+						{ image: fileName },
+						{ new: true },
+						(err, userUpdated) => {
+							if (err)
+								return res
+									.status(500)
+									.send({ message: "La imagen no se ha subido" });
 
-						if(!userUpdated) return res.status(404).send({message: 'El usuario no existe y no se ha asignado la imagen'});
-						return res.status(200).send({
-							project: userUpdated,
-							path: path,
-						});
-					});
+							if (!userUpdated)
+								return res
+									.status(404)
+									.send({
+										message:
+											"El usuario no existe y no se ha asignado la imagen",
+									});
+							return res.status(200).send({
+								project: userUpdated,
+								path: path,
+							});
+						}
+					);
 				});
-			}else
-			{
+			} else {
 				fs.unlink(filePath, (err) => {
-					return res.status(200).send({message: 'La extensión no es válida'});
+					return res.status(200).send({ message: "La extensión no es válida" });
 				});
 			}
-
 		}
-
 	},
 
-	getImageFile: function(req, res){
+	getImageFile: function (req, res) {
 		var file = req.params.image; //Capturo el nombre del archivo con su extension
-		var path_file = './img/'+file; // le agrego el prefijo en donde se guardan
+		var path_file = "./img/" + file; // le agrego el prefijo en donde se guardan
 		fs.exists(path_file, (exists) => {
-			if(exists){
+			if (exists) {
 				return res.sendFile(path.resolve(path_file)); //devuelvo la ruta completa de la img desde la raiz
-			}else{
+			} else {
 				return res.status(200).send({
-					message: "No existe la imagen..."
+					message: "No existe la imagen...",
 				});
 			}
 		});
-	}
-
-
+	},
 };
 
 module.exports = controller;
